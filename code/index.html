@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>규식 ♥ 은아</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Nanum Myeongjo', 'Georgia', serif;
+            background: #faf8f5;
+            color: #3d3135;
+            max-width: 480px;
+            margin: 0 auto;
+            overflow-x: hidden;
+        }
+
+        /* ===== MUSIC ===== */
+        .music-btn {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 999;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid rgba(201, 169, 110, 0.8);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            transition: all 0.3s;
+        }
+        .music-btn.playing {
+            background: rgba(201, 169, 110, 0.9);
+            color: #fff;
+        }
+
+        /* ===== COVER ===== */
+        .cover {
+            position: relative;
+            overflow: hidden;
+        }
+        .cover-bg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .cover-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(20,12,12,0.7) 100%);
+        }
+        .cover-content {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            z-index: 2;
+            text-align: center;
+            color: #fff;
+            animation: fadeUp 1.4s ease forwards;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .cover-tag {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 11px;
+            letter-spacing: 5px;
+            opacity: 0.8;
+            margin-bottom: 14px;
+        }
+        .cover-names {
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+        .cover-sub {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 17px;
+            opacity: 0.85;
+            margin-bottom: 18px;
+        }
+        .cover-date {
+            font-size: 12px;
+            letter-spacing: 2px;
+            opacity: 0.75;
+        }
+        .scroll-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            color: rgba(255,255,255,0.5);
+            animation: bounce 2.2s ease-in-out infinite;
+            font-size: 22px;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50%       { transform: translateX(-50%) translateY(10px); }
+        }
+
+        /* ===== COMMON ===== */
+        .sec {
+            padding: 64px 28px;
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .sec.visible { opacity: 1; transform: translateY(0); }
+
+        .sec-label {
+            text-align: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 10px;
+            letter-spacing: 5px;
+            color: #c9a96e;
+            margin-bottom: 28px;
+        }
+        .divider {
+            text-align: center;
+            color: #d4c4b0;
+            letter-spacing: 10px;
+            font-size: 8px;
+            padding: 4px 0;
+        }
+
+        /* ===== INTRO ===== */
+        .intro { text-align: center; }
+        .intro-big {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 32px;
+            color: #c9a96e;
+            margin-bottom: 28px;
+        }
+        .intro-text {
+            font-size: 14px;
+            line-height: 2.4;
+            color: #5a4a4a;
+            word-break: keep-all;
+        }
+
+        /* ===== VIDEO ===== */
+        .video-sec { padding: 0 0 8px; }
+        .video-label { padding: 48px 28px 0; }
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #111;
+            overflow: hidden;
+            aspect-ratio: 9/16;
+            max-height: 75vh;
+        }
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .video-ph {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f0ebe5, #e8dfd5);
+            color: #aaa;
+            gap: 12px;
+        }
+        .video-ph-icon { font-size: 52px; }
+        .video-ph-text { font-size: 13px; letter-spacing: 1px; }
+
+        /* ===== GALLERY ===== */
+        .gallery-sec { padding: 16px 0 0; }
+        .gallery-label { padding: 32px 28px 16px; }
+
+        .slider-wrap {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background: #111;
+        }
+        .slider-track {
+            display: flex;
+            transition: transform 0.4s ease;
+        }
+        .slider-track img {
+            min-width: 100%;
+            width: 100%;
+            height: 420px;
+            object-fit: cover;
+            display: block;
+        }
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.7);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slider-btn.prev { left: 10px; }
+        .slider-btn.next { right: 10px; }
+
+        .slider-thumbs {
+            display: flex;
+            gap: 4px;
+            padding: 6px 4px;
+            overflow-x: auto;
+            background: #f5f0eb;
+            scrollbar-width: none;
+        }
+        .slider-thumbs::-webkit-scrollbar { display: none; }
+        .slider-thumbs img {
+            width: 72px;
+            height: 54px;
+            object-fit: cover;
+            cursor: pointer;
+            opacity: 0.5;
+            border: 2px solid transparent;
+            flex-shrink: 0;
+            transition: opacity 0.2s, border-color 0.2s;
+        }
+        .slider-thumbs img.active {
+            opacity: 1;
+            border-color: #c9a96e;
+        }
+
+        /* ===== CALENDAR ===== */
+        .cal-sec { background: #fff; text-align: center; }
+        .dday {
+            display: inline-block;
+            background: #c9a96e;
+            color: #fff;
+            font-size: 11px;
+            letter-spacing: 3px;
+            padding: 5px 18px;
+            margin-bottom: 22px;
+        }
+        .cal-date-big {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 52px;
+            font-weight: 300;
+            color: #3d3135;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .cal-year {
+            font-size: 12px;
+            color: #aaa;
+            letter-spacing: 4px;
+            margin-bottom: 32px;
+        }
+        .mini-cal {
+            max-width: 290px;
+            margin: 0 auto 28px;
+            border: 1px solid #ede8e0;
+        }
+        .mini-cal-head {
+            background: #3d3135;
+            color: #fff;
+            font-size: 13px;
+            letter-spacing: 2px;
+            padding: 10px;
+            text-align: center;
+        }
+        .cal-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #faf8f5;
+        }
+        .cd {
+            padding: 9px 0;
+            font-size: 12px;
+            text-align: center;
+            color: #3d3135;
+        }
+        .cd-h { font-size: 10px; color: #aaa; letter-spacing: 1px; }
+        .cd.sun { color: #d9534f; }
+        .cd.sat { color: #5b86c0; }
+        .cd.wedding {
+            position: relative;
+        }
+        .cd.wedding span {
+            display: inline-flex;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #c9a96e;
+            color: #fff;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        .cal-time {
+            font-size: 15px;
+            line-height: 2.2;
+            color: #5a4a4a;
+        }
+
+        /* ===== LOCATION ===== */
+        .loc-sec { text-align: center; }
+        .venue-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #3d3135;
+            margin-bottom: 6px;
+        }
+        .venue-floor {
+            font-size: 13px;
+            color: #c9a96e;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .venue-addr {
+            font-size: 13px;
+            color: #888;
+            line-height: 2;
+            margin-bottom: 32px;
+        }
+        .map-iframe-wrap {
+            width: 100%;
+            height: 220px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 14px;
+            border: 1px solid #e8e0d8;
+        }
+        .map-iframe-wrap iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .map-btns {
+            display: flex;
+            gap: 8px;
+        }
+        .map-btn {
+            flex: 1;
+            padding: 13px 8px;
+            border: 1px solid #c9a96e;
+            background: transparent;
+            color: #c9a96e;
+            font-size: 12px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-family: 'Nanum Myeongjo', serif;
+            transition: all 0.2s;
+            border-radius: 3px;
+        }
+        .map-btn:active { background: #c9a96e; color: #fff; }
+
+        /* ===== TRANSPORT ===== */
+        .transport {
+            margin-top: 28px;
+            text-align: left;
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #ede8e0;
+        }
+        .trans-title {
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: #c9a96e;
+            margin-bottom: 14px;
+        }
+        .trans-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #5a4a4a;
+            line-height: 1.8;
+        }
+        .trans-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* ===== FAMILY ===== */
+        .family-sec { background: #fff; text-align: center; }
+        .family-block { margin-bottom: 32px; }
+        .family-side {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: #c9a96e;
+            margin-bottom: 10px;
+        }
+        .family-main-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #3d3135;
+            margin-bottom: 10px;
+        }
+        .family-parents {
+            font-size: 13px;
+            color: #888;
+            line-height: 2.2;
+        }
+        .family-separator {
+            width: 40px;
+            height: 1px;
+            background: #d4c4b0;
+            margin: 32px auto;
+        }
+
+        /* ===== ACCOUNT ===== */
+        .acc-sec { text-align: center; }
+        .acc-desc {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 24px;
+        }
+        .acc-tabs {
+            display: flex;
+            border: 1px solid #d4c4b0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .acc-tab {
+            flex: 1;
+            padding: 13px;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-family: 'Nanum Myeongjo', serif;
+            color: #aaa;
+            transition: all 0.2s;
+        }
+        .acc-tab.on { background: #3d3135; color: #fff; }
+        .acc-panel { display: none; }
+        .acc-panel.on { display: block; }
+        .acc-card {
+            background: #faf8f5;
+            border: 1px solid #ede8e0;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 10px;
+            text-align: left;
+            position: relative;
+        }
+        .acc-who { font-size: 11px; color: #aaa; margin-bottom: 5px; }
+        .acc-bank { font-size: 12px; color: #888; margin-bottom: 4px; }
+        .acc-num { font-size: 15px; font-weight: 700; color: #3d3135; letter-spacing: 1px; }
+        .acc-copy {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 7px 13px;
+            background: #c9a96e;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: 'Nanum Myeongjo', serif;
+        }
+        .acc-copy:active { background: #b8934f; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(61,49,53,0.92);
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 24px;
+            font-size: 13px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 9999;
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            padding: 64px 28px;
+            background: #3d3135;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+        }
+        .footer-heart { font-size: 26px; color: #c9a96e; margin-bottom: 18px; }
+        .footer-text { font-size: 13px; line-height: 2.4; }
+        .footer-names {
+            font-size: 20px;
+            color: rgba(255,255,255,0.9);
+            letter-spacing: 5px;
+            margin-top: 24px;
+        }
+        /* ===== ENTRANCE OVERLAY ===== */
+        .entrance {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #1a1210;
+        }
+        .entrance-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.45;
+        }
+        .entrance-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: #fff;
+            animation: fadeUp 1.2s ease forwards;
+        }
+        .entrance-tag {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 11px;
+            letter-spacing: 5px;
+            opacity: 0.7;
+            margin-bottom: 20px;
+        }
+        .entrance-names {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+        }
+        .entrance-date {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 16px;
+            opacity: 0.75;
+            margin-bottom: 48px;
+        }
+        .entrance-touch {
+            font-size: 11px;
+            letter-spacing: 4px;
+            opacity: 0.6;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50%       { opacity: 0.9; }
+        }
+        .entrance.hide {
+            animation: fadeOut 0.8s ease forwards;
+            pointer-events: none;
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== 입장 화면 ========== -->
+<div class="entrance" id="entrance" onclick="enterSite()">
+    <img class="entrance-bg" id="entranceBg" alt="">
+    <div class="entrance-content">
+        <p class="entrance-tag">WEDDING INVITATION</p>
+        <p class="entrance-names">김규식 · 최은아</p>
+        <p class="entrance-date">2026. 08. 29 SAT PM 3:30</p>
+        <p class="entrance-touch">T O U C H</p>
+    </div>
+</div>
+
+<!-- 음악 버튼 -->
+<button class="music-btn" id="musicBtn" onclick="toggleMusic()" title="음악 재생">♪</button>
+<audio id="bgMusic" loop>
+    <source src="../data/music.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ========== COVER ========== -->
+<section class="cover">
+    <img class="cover-bg" id="coverImg" alt="웨딩 사진">
+    <div class="cover-overlay"></div>
+    <div class="cover-content">
+        <p class="cover-tag">WEDDING INVITATION</p>
+        <h1 class="cover-names">김규식 · 최은아</h1>
+        <p class="cover-sub">We are getting married</p>
+        <p class="cover-date">2026 · 08 · 29 · SAT · PM 3:30</p>
+    </div>
+    <div class="scroll-hint">↓</div>
+</section>
+
+<!-- ========== INTRO ========== -->
+<section class="sec intro">
+    <p class="sec-label">INVITATION</p>
+    <p class="intro-big">Invitation</p>
+    <p class="intro-text">
+        서로가 마주보며 다져온 사랑을<br>
+        이제 함께 걸어갈 큰 사랑으로 키우고자 합니다.<br><br>
+        저희 두 사람이 사랑의 결실을 맺는<br>
+        소중한 날에 오셔서 축복해 주시면<br>
+        더없는 기쁨이 되겠습니다.
+    </p>
+</section>
+
+<div class="divider">✦ ✦ ✦</div>
+
+
+<!-- ========== GALLERY ========== -->
+<section class="gallery-sec">
+    <div class="gallery-label sec" style="text-align:center;">
+        <p class="sec-label">GALLERY</p>
+    </div>
+    <div class="slider-wrap">
+        <div class="slider-track" id="sliderTrack"></div>
+        <button class="slider-btn prev" onclick="slideMove(-1)">&#8249;</button>
+        <button class="slider-btn next" onclick="slideMove(1)">&#8250;</button>
+    </div>
+    <div class="slider-thumbs" id="sliderThumbs"></div>
+</section>
+
+<div class="divider" style="margin-top:16px;">✦ ✦ ✦</div>
+
+<!-- ========== CALENDAR ========== -->
+<section class="sec cal-sec">
+    <p class="sec-label">WEDDING DAY</p>
+    <div class="dday" id="ddayBadge">D - ?</div>
+    <p class="cal-date-big">08.29</p>
+    <p class="cal-year">2026 · SATURDAY</p>
+
+    <!-- 2026년 8월 달력 (8월 1일 = 토요일) -->
+    <div class="mini-cal">
+        <div class="mini-cal-head">2026년 8월</div>
+        <div class="cal-days">
+            <div class="cd cd-h sun">일</div>
+            <div class="cd cd-h">월</div>
+            <div class="cd cd-h">화</div>
+            <div class="cd cd-h">수</div>
+            <div class="cd cd-h">목</div>
+            <div class="cd cd-h">금</div>
+            <div class="cd cd-h sat">토</div>
+            <!-- 8/1=토 → 일~금 6칸 비움 -->
+            <div class="cd"></div><div class="cd"></div><div class="cd"></div>
+            <div class="cd"></div><div class="cd"></div><div class="cd"></div>
+            <div class="cd sat">1</div>
+            <div class="cd sun">2</div><div class="cd">3</div><div class="cd">4</div>
+            <div class="cd">5</div><div class="cd">6</div><div class="cd">7</div>
+            <div class="cd sat">8</div>
+            <div class="cd sun">9</div><div class="cd">10</div><div class="cd">11</div>
+            <div class="cd">12</div><div class="cd">13</div><div class="cd">14</div>
+            <div class="cd sat">15</div>
+            <div class="cd sun">16</div><div class="cd">17</div><div class="cd">18</div>
+            <div class="cd">19</div><div class="cd">20</div><div class="cd">21</div>
+            <div class="cd sat">22</div>
+            <div class="cd sun">23</div><div class="cd">24</div><div class="cd">25</div>
+            <div class="cd">26</div><div class="cd">27</div><div class="cd">28</div>
+            <div class="cd wedding sat"><span>29</span></div>
+            <div class="cd sun">30</div><div class="cd">31</div>
+        </div>
+    </div>
+
+    <p class="cal-time">
+        오후 3시 30분<br>
+        더휴 웨딩홀
+    </p>
+</section>
+
+<!-- ========== LOCATION ========== -->
+<section class="sec loc-sec">
+    <p class="sec-label">LOCATION</p>
+    <p class="venue-name">더휴 웨딩홀</p>
+    <p class="venue-floor">EK-TOWER 2F</p>
+    <p class="venue-addr">서울특별시 강남구 테헤란로 407<br>EK-Tower 2층</p>
+
+    <div class="map-iframe-wrap">
+        <iframe
+            src="https://maps.google.com/maps?q=서울+강남구+테헤란로+407+EK타워&z=16&output=embed"
+            allowfullscreen
+            loading="lazy">
+        </iframe>
+    </div>
+
+    <div class="map-btns" style="justify-content:center;">
+        <a class="map-btn"
+           href="https://map.naver.com/v5/search/%EC%84%9C%EC%9A%B8+%EA%B0%95%EB%82%A8%EA%B5%AC+%ED%85%8C%ED%97%A4%EB%9E%80%EB%A1%9C+407+EK%ED%83%80%EC%9B%8C"
+           target="_blank" style="max-width:180px;">🗺 네이버맵으로 보기</a>
+    </div>
+
+    <div class="transport">
+        <p class="trans-title">교통 안내</p>
+        <div class="trans-row">
+            <span class="trans-icon">🚇</span>
+            <a href="https://map.naver.com/v5/search/선릉역" target="_blank" style="color:#5a4a4a; text-decoration:underline; text-underline-offset:3px;">
+                선릉역 10번 출구
+            </a>
+        </div>
+        <div class="trans-row">
+            <span class="trans-icon">🚌</span>
+            <a href="https://map.naver.com/v5/search/선릉역+버스정류장" target="_blank" style="color:#5a4a4a; text-decoration:underline; text-underline-offset:3px;">
+                선릉역 정류장 하차 후<br>테헤란로 방향 도보 이동
+            </a>
+        </div>
+        <div class="trans-row">
+            <span class="trans-icon">🚗</span>
+            <span>EK-Tower 건물 내 주차 가능<br>(예식 당일 무료 주차)</span>
+        </div>
+    </div>
+</section>
+
+<div class="divider">✦ ✦ ✦</div>
+
+<!-- ========== FAMILY ========== -->
+<section class="sec family-sec">
+    <p class="sec-label">FAMILY</p>
+
+    <div class="family-block">
+        <p class="family-side">신랑측</p>
+        <p class="family-main-name">김규식</p>
+        <p class="family-parents">
+            아버지 김택관<br>
+            어머니 김현숙<br>
+            의 아들
+        </p>
+    </div>
+
+    <div class="family-separator"></div>
+
+    <div class="family-block" style="margin-bottom:0">
+        <p class="family-side">신부측</p>
+        <p class="family-main-name">최은아</p>
+        <p class="family-parents">
+            아버지 최병호<br>
+            어머니 류영희<br>
+            의 딸
+        </p>
+    </div>
+</section>
+
+<!-- ========== ACCOUNT ========== -->
+<section class="sec acc-sec">
+    <p class="sec-label">ACCOUNT</p>
+    <p class="acc-desc">마음을 전하고 싶으신 분들께</p>
+
+    <div class="acc-tabs">
+        <button class="acc-tab on" onclick="switchTab(this, 'groom')">신랑측</button>
+        <button class="acc-tab" onclick="switchTab(this, 'bride')">신부측</button>
+    </div>
+
+    <div class="acc-panel on" id="panel-groom">
+        <div class="acc-card">
+            <p class="acc-who">신랑 김규식</p>
+            <p class="acc-bank">— 은행 추가 예정 —</p>
+            <p class="acc-num">계좌번호 추가 예정</p>
+        </div>
+        <div class="acc-card">
+            <p class="acc-who">아버지 김택관</p>
+            <p class="acc-bank">— 은행 추가 예정 —</p>
+            <p class="acc-num">계좌번호 추가 예정</p>
+        </div>
+    </div>
+
+    <div class="acc-panel" id="panel-bride">
+        <div class="acc-card">
+            <p class="acc-who">신부 최은아</p>
+            <p class="acc-bank">— 은행 추가 예정 —</p>
+            <p class="acc-num">계좌번호 추가 예정</p>
+        </div>
+        <div class="acc-card">
+            <p class="acc-who">아버지 최병호</p>
+            <p class="acc-bank">— 은행 추가 예정 —</p>
+            <p class="acc-num">계좌번호 추가 예정</p>
+        </div>
+    </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+    <div class="footer-heart">♥</div>
+    <p class="footer-text">
+        저희의 새로운 시작을 함께해 주셔서<br>
+        진심으로 감사드립니다
+    </p>
+    <p class="footer-names">규식 · 은아</p>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 이미지 세팅 =====
+const photos = [
+    '../images/photo1.jpeg',
+    '../images/photo2.jpeg',
+    '../images/photo3.jpeg',
+    '../images/photo4.jpeg',
+    '../images/photo5.jpeg',
+    '../images/photo6.jpeg',
+    '../images/photo7.jpeg',
+    '../images/photo8.jpeg'
+];
+
+// 커버 이미지
+document.getElementById('coverImg').src = '../images/photo1.jpeg';
+
+// ===== 슬라이더 =====
+let slideIdx = 0;
+const track = document.getElementById('sliderTrack');
+const thumbsWrap = document.getElementById('sliderThumbs');
+
+photos.forEach((src, i) => {
+    // 메인 슬라이드
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = `웨딩 사진 ${i + 1}`;
+    track.appendChild(img);
+
+    // 썸네일
+    const th = document.createElement('img');
+    th.src = src;
+    th.alt = `썸네일 ${i + 1}`;
+    th.loading = 'lazy';
+    if (i === 0) th.classList.add('active');
+    th.addEventListener('click', () => goSlide(i));
+    thumbsWrap.appendChild(th);
+});
+
+function goSlide(idx) {
+    slideIdx = idx;
+    track.style.transform = `translateX(-${100 * idx}%)`;
+    thumbsWrap.querySelectorAll('img').forEach((t, i) => {
+        t.classList.toggle('active', i === idx);
+    });
+}
+
+function slideMove(dir) {
+    goSlide((slideIdx + dir + photos.length) % photos.length);
+}
+
+// 터치 스와이프
+let touchStartX = 0;
+track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+track.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) slideMove(dx < 0 ? 1 : -1);
+});
+
+
+// ===== D-DAY =====
+(function updateDday() {
+    const wedding = new Date('2026-08-29T15:30:00');
+    const now = new Date();
+    const diff = Math.ceil((wedding - now) / 86400000);
+    const el = document.getElementById('ddayBadge');
+    if (diff > 0)      el.textContent = `D - ${diff}`;
+    else if (diff === 0) el.textContent = 'D - DAY ♥';
+    else               el.textContent = `D + ${Math.abs(diff)}`;
+})();
+
+// ===== 입장 화면 =====
+document.getElementById('entranceBg').src = '../images/photo1.jpeg';
+
+const audio = document.getElementById('bgMusic');
+const musicBtn = document.getElementById('musicBtn');
+let playing = false;
+
+function enterSite() {
+    // 노래 재생
+    audio.play().then(() => {
+        playing = true;
+        musicBtn.textContent = '♫';
+        musicBtn.classList.add('playing');
+    }).catch(() => {});
+    // 입장 화면 제거
+    const entrance = document.getElementById('entrance');
+    entrance.classList.add('hide');
+    setTimeout(() => entrance.remove(), 800);
+}
+
+// ===== 음악 토글 =====
+function toggleMusic() {
+    if (playing) {
+        audio.pause();
+        musicBtn.textContent = '♪';
+        musicBtn.classList.remove('playing');
+        playing = false;
+    } else {
+        audio.play();
+        musicBtn.textContent = '♫';
+        musicBtn.classList.add('playing');
+        playing = true;
+    }
+}
+
+// ===== 계좌 탭 =====
+function switchTab(btn, side) {
+    document.querySelectorAll('.acc-tab').forEach(t => t.classList.remove('on'));
+    document.querySelectorAll('.acc-panel').forEach(p => p.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById(`panel-${side}`).classList.add('on');
+}
+
+// ===== 계좌 복사 =====
+function copyAccount(num, btn) {
+    navigator.clipboard.writeText(num).then(() => {
+        showToast('계좌번호가 복사되었습니다');
+    }).catch(() => {
+        showToast('복사에 실패했습니다');
+    });
+}
+
+// ===== T맵 =====
+
+// ===== 토스트 =====
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ===== 스크롤 애니메이션 =====
+const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.sec').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
