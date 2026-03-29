@@ -190,18 +190,15 @@
         .slider-wrap {
             position: relative;
             width: 100%;
-            overflow: hidden;
             background: #111;
         }
-        .slider-track {
-            display: flex;
-            transition: transform 0.4s ease;
-            width: 100%;
-        }
-        .slider-track img {
-            flex: 0 0 100%;
+        .slider-wrap img.slide {
             width: 100%;
             height: auto;
+            display: none;
+            block-size: auto;
+        }
+        .slider-wrap img.slide.active {
             display: block;
         }
         .slider-btn {
@@ -642,8 +639,7 @@
     <div class="gallery-label sec" style="text-align:center;">
         <p class="sec-label">GALLERY</p>
     </div>
-    <div class="slider-wrap">
-        <div class="slider-track" id="sliderTrack"></div>
+    <div class="slider-wrap" id="sliderWrap">
         <button class="slider-btn prev" onclick="slideMove(-1)">&#8249;</button>
         <button class="slider-btn next" onclick="slideMove(1)">&#8250;</button>
     </div>
@@ -845,17 +841,18 @@ document.getElementById('coverImg').src = '../images/photo1.jpeg';
 
 // ===== 슬라이더 =====
 let slideIdx = 0;
-const track = document.getElementById('sliderTrack');
+const sliderWrap = document.getElementById('sliderWrap');
 const thumbsWrap = document.getElementById('sliderThumbs');
+const slides = [];
 
 photos.forEach((src, i) => {
-    // 메인 슬라이드
     const img = document.createElement('img');
     img.src = src;
     img.alt = `웨딩 사진 ${i + 1}`;
-    track.appendChild(img);
+    img.className = 'slide' + (i === 0 ? ' active' : '');
+    sliderWrap.insertBefore(img, sliderWrap.querySelector('.slider-btn.prev'));
+    slides.push(img);
 
-    // 썸네일
     const th = document.createElement('img');
     th.src = src;
     th.alt = `썸네일 ${i + 1}`;
@@ -866,11 +863,11 @@ photos.forEach((src, i) => {
 });
 
 function goSlide(idx) {
+    slides[slideIdx].classList.remove('active');
+    thumbsWrap.querySelectorAll('img')[slideIdx].classList.remove('active');
     slideIdx = idx;
-    track.style.transform = `translateX(-${100 * idx}%)`;
-    thumbsWrap.querySelectorAll('img').forEach((t, i) => {
-        t.classList.toggle('active', i === idx);
-    });
+    slides[slideIdx].classList.add('active');
+    thumbsWrap.querySelectorAll('img')[slideIdx].classList.add('active');
 }
 
 function slideMove(dir) {
@@ -879,8 +876,8 @@ function slideMove(dir) {
 
 // 터치 스와이프
 let touchStartX = 0;
-track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
-track.addEventListener('touchend', e => {
+sliderWrap.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+sliderWrap.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - touchStartX;
     if (Math.abs(dx) > 40) slideMove(dx < 0 ? 1 : -1);
 });
