@@ -187,61 +187,15 @@
         .gallery-sec { padding: 16px 0 0; }
         .gallery-label { padding: 32px 28px 16px; }
 
-        .slider-wrap {
-            position: relative;
-            width: 100%;
-            background: #111;
+        .gallery-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
         }
-        .slider-wrap img.slide {
+        .gallery-grid img {
             width: 100%;
-            aspect-ratio: 3 / 4;
-            object-fit: cover;
-            display: none;
-        }
-        .slider-wrap img.slide.active {
+            height: auto;
             display: block;
-        }
-        .slider-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.7);
-            border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .slider-btn.prev { left: 10px; }
-        .slider-btn.next { right: 10px; }
-
-        .slider-thumbs {
-            display: flex;
-            gap: 4px;
-            padding: 6px 4px;
-            overflow-x: auto;
-            background: #f5f0eb;
-            scrollbar-width: none;
-        }
-        .slider-thumbs::-webkit-scrollbar { display: none; }
-        .slider-thumbs img {
-            width: 72px;
-            height: 54px;
-            object-fit: cover;
-            cursor: pointer;
-            opacity: 0.5;
-            border: 2px solid transparent;
-            flex-shrink: 0;
-            transition: opacity 0.2s, border-color 0.2s;
-        }
-        .slider-thumbs img.active {
-            opacity: 1;
-            border-color: #c9a96e;
         }
 
         /* ===== CALENDAR ===== */
@@ -639,11 +593,7 @@
     <div class="gallery-label sec" style="text-align:center;">
         <p class="sec-label">GALLERY</p>
     </div>
-    <div class="slider-wrap" id="sliderWrap">
-        <button class="slider-btn prev" onclick="slideMove(-1)">&#8249;</button>
-        <button class="slider-btn next" onclick="slideMove(1)">&#8250;</button>
-    </div>
-    <div class="slider-thumbs" id="sliderThumbs"></div>
+    <div class="gallery-grid" id="galleryGrid"></div>
 </section>
 
 <div class="divider" style="margin-top:16px;">✦ ✦ ✦</div>
@@ -839,47 +789,14 @@ const photos = [
 // 커버 이미지
 document.getElementById('coverImg').src = '../images/photo1.jpeg';
 
-// ===== 슬라이더 =====
-let slideIdx = 0;
-const sliderWrap = document.getElementById('sliderWrap');
-const thumbsWrap = document.getElementById('sliderThumbs');
-const slides = [];
-
+// ===== 갤러리 =====
+const grid = document.getElementById('galleryGrid');
 photos.forEach((src, i) => {
     const img = document.createElement('img');
     img.src = src;
     img.alt = `웨딩 사진 ${i + 1}`;
-    img.className = 'slide' + (i === 0 ? ' active' : '');
-    sliderWrap.insertBefore(img, sliderWrap.querySelector('.slider-btn.prev'));
-    slides.push(img);
-
-    const th = document.createElement('img');
-    th.src = src;
-    th.alt = `썸네일 ${i + 1}`;
-    th.loading = 'lazy';
-    if (i === 0) th.classList.add('active');
-    th.addEventListener('click', () => goSlide(i));
-    thumbsWrap.appendChild(th);
-});
-
-function goSlide(idx) {
-    slides[slideIdx].classList.remove('active');
-    thumbsWrap.querySelectorAll('img')[slideIdx].classList.remove('active');
-    slideIdx = idx;
-    slides[slideIdx].classList.add('active');
-    thumbsWrap.querySelectorAll('img')[slideIdx].classList.add('active');
-}
-
-function slideMove(dir) {
-    goSlide((slideIdx + dir + photos.length) % photos.length);
-}
-
-// 터치 스와이프
-let touchStartX = 0;
-sliderWrap.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
-sliderWrap.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 40) slideMove(dx < 0 ? 1 : -1);
+    img.loading = 'lazy';
+    grid.appendChild(img);
 });
 
 
