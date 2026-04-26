@@ -188,14 +188,82 @@
         .gallery-label { padding: 32px 28px 16px; }
 
         .gallery-grid {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 3px;
+            padding: 0 3px;
         }
         .gallery-grid img {
             width: 100%;
-            height: auto;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
             display: block;
+            cursor: pointer;
+            transition: opacity 0.25s ease;
+        }
+        .gallery-grid img:active { opacity: 0.7; }
+
+        /* ===== GALLERY MODAL ===== */
+        .gallery-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            touch-action: pan-y;
+        }
+        .gallery-modal.open { display: flex; }
+        .gallery-modal-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        .gm-btn {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            backdrop-filter: blur(8px);
+        }
+        .gm-close {
+            top: 18px;
+            right: 18px;
+            width: 38px;
+            height: 38px;
+            font-size: 22px;
+            line-height: 1;
+        }
+        .gm-prev, .gm-next {
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 42px;
+            font-size: 24px;
+            line-height: 1;
+        }
+        .gm-prev { left: 12px; }
+        .gm-next { right: 12px; }
+        .gm-counter {
+            position: absolute;
+            bottom: 24px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            letter-spacing: 3px;
+            font-family: 'Cormorant Garamond', serif;
+            z-index: 2;
         }
 
         /* ===== CALENDAR ===== */
@@ -770,6 +838,15 @@
     <p class="footer-names">규식 · 은아</p>
 </footer>
 
+<!-- Gallery Modal -->
+<div class="gallery-modal" id="galleryModal" role="dialog" aria-modal="true" aria-label="사진 갤러리">
+    <button class="gm-btn gm-close" type="button" aria-label="닫기" onclick="closeGallery()">×</button>
+    <button class="gm-btn gm-prev" type="button" aria-label="이전 사진" onclick="prevGallery(event)">‹</button>
+    <img class="gallery-modal-img" id="galleryModalImg" alt="">
+    <button class="gm-btn gm-next" type="button" aria-label="다음 사진" onclick="nextGallery(event)">›</button>
+    <div class="gm-counter" id="galleryCounter">1 / 1</div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -796,11 +873,72 @@ document.getElementById('coverImg').src = '../images/photo3.jpeg';
 const grid = document.getElementById('galleryGrid');
 photos.forEach((src, i) => {
     const img = document.createElement('img');
-    img.src = src;
+    img.src = src.replace('../images/', '../images/thumbs/');
     img.alt = `웨딩 사진 ${i + 1}`;
     img.loading = 'lazy';
+    img.addEventListener('click', () => openGallery(i));
     grid.appendChild(img);
 });
+
+// ===== 갤러리 모달 =====
+const galleryModal = document.getElementById('galleryModal');
+const galleryModalImg = document.getElementById('galleryModalImg');
+const galleryCounter = document.getElementById('galleryCounter');
+let galleryIdx = 0;
+
+function renderGallery() {
+    galleryModalImg.src = photos[galleryIdx];
+    galleryModalImg.alt = `웨딩 사진 ${galleryIdx + 1}`;
+    galleryCounter.textContent = `${galleryIdx + 1} / ${photos.length}`;
+}
+function openGallery(i) {
+    galleryIdx = i;
+    renderGallery();
+    galleryModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeGallery() {
+    galleryModal.classList.remove('open');
+    document.body.style.overflow = '';
+}
+function prevGallery(e) {
+    if (e) e.stopPropagation();
+    galleryIdx = (galleryIdx - 1 + photos.length) % photos.length;
+    renderGallery();
+}
+function nextGallery(e) {
+    if (e) e.stopPropagation();
+    galleryIdx = (galleryIdx + 1) % photos.length;
+    renderGallery();
+}
+
+// 배경 클릭 시 닫기
+galleryModal.addEventListener('click', e => {
+    if (e.target === galleryModal || e.target === galleryModalImg) closeGallery();
+});
+
+// 키보드
+document.addEventListener('keydown', e => {
+    if (!galleryModal.classList.contains('open')) return;
+    if (e.key === 'ArrowLeft') prevGallery();
+    else if (e.key === 'ArrowRight') nextGallery();
+    else if (e.key === 'Escape') closeGallery();
+});
+
+// 스와이프 (모바일)
+let gmTouchStartX = 0;
+let gmTouchStartY = 0;
+galleryModal.addEventListener('touchstart', e => {
+    gmTouchStartX = e.changedTouches[0].clientX;
+    gmTouchStartY = e.changedTouches[0].clientY;
+}, { passive: true });
+galleryModal.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - gmTouchStartX;
+    const dy = e.changedTouches[0].clientY - gmTouchStartY;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx > 0) prevGallery();
+    else nextGallery();
+}, { passive: true });
 
 
 // ===== D-DAY =====

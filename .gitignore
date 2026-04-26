@@ -1,0 +1,5 @@
+# 로컬 백업 (배포에 불필요)
+images/original/
+
+# macOS
+.DS_Store
